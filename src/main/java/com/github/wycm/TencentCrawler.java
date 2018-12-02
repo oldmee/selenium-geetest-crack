@@ -23,10 +23,9 @@ import org.openqa.selenium.interactions.Actions;
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLContext;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -41,14 +40,14 @@ import java.util.concurrent.TimeUnit;
  * selenium破解腾讯滑动验证码
  */
 public class TencentCrawler {
-    private static String BASE_PATH = "";
+    private static String BASE_PATH = "E:\\sourceimg\\";
     //小方块距离左边界距离
-    private static int START_DISTANCE = 22;
+    private static int START_DISTANCE = 35;
     private static ChromeDriver driver = null;
     static {
         System.setProperty("webdriver.chrome.driver", "/Users/wangyang/Downloads/chromedriver");
         if (System.getProperty("os.name").toLowerCase().contains("windows")){
-            System.setProperty("webdriver.chrome.driver", "D:\\dev\\selenium\\chromedriver_V2.30\\chromedriver_win32\\chromedriver.exe");
+            System.setProperty("webdriver.chrome.driver", "C:\\Users\\L\\AppData\\Local\\Google\\Chrome\\Application\\chromedriver.exe");
         }
     }
     public static void main(String[] args) throws IOException {
@@ -60,7 +59,8 @@ public class TencentCrawler {
         driver = new ChromeDriver();
         for(int i = 0; i < 10; i++) {
             try {
-                driver.manage().window().setSize(new Dimension(1024, 768));
+//                driver.manage().window().setSize(new Dimension(1920, 1080));
+                driver.manage().window().maximize();
                 driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
                 driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
                 driver.get("https://007.qq.com/online.html?ADTAG=capt.slide");
@@ -69,13 +69,16 @@ public class TencentCrawler {
                 Thread.sleep(2 * 1000);
                 driver.findElement(By.id("code")).click();
                 Actions actions = new Actions(driver);
-                driver.switchTo().frame("tcaptcha_popup");
-                String originalUrl = Jsoup.parse(driver.getPageSource()).select("[id=slideBkg]").first().attr("src");
+                driver.switchTo().frame("tcaptcha_iframe");
+//                driver.switchTo().frame("tcaptcha_popup");
+//                String originalUrl = Jsoup.parse(driver.getPageSource()).select("[id=slideBkg]").first().attr("src");
+                String originalUrl = Jsoup.parse(driver.getPageSource()).select("[id=slideBg]").first().attr("src");
                 System.out.println(originalUrl);
                 downloadOriginalImg(i, originalUrl, driver.manage().getCookies());
                 int distance = calcMoveDistance(i);
                 List<MoveEntity> list = getMoveEntity(distance);
-                element = driver.findElement(By.id("tcaptcha_drag_button"));
+//                element = driver.findElement(By.id("tcaptcha_drag_button"));
+                element = driver.findElement(By.id("tcaptcha_drag_thumb"));
                 actions.clickAndHold(element).perform();
                 int d = 0;
                 for (MoveEntity moveEntity : list) {
@@ -143,6 +146,18 @@ public class TencentCrawler {
      */
     public static int calcMoveDistance(int i) throws IOException {
         BufferedImage fullBI = ImageIO.read(new File(BASE_PATH + "tencent-original" + i + ".png"));
+//        BufferedImage fullBI = ImageIO.read(new File("https://hy.captcha.qq.com/hycdn_1_1657788016386103808_0?aid=2100049389&accver=1&showtype=popup&ua=TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzcwLjAuMzUzOC42NyBTYWZhcmkvNTM3LjM2&noheader=1&fb=1&fpinfo=fpsig%3Dundefined&grayscale=1&clientype=2&subsid=3&sess=glj9qACE4CMvWsmPSky__qP1sOECKRb5YgK-D-7wyu6CJq80QJUSo8p86CDHvszZEaVUhhiiOX9JAONZpXCxRb4N27_ZIvDYNTc71QU8N_tYwDDy_evIFfdxELYMqpOmMTAE8y_w1D9l49d41QgnRwFiOoUG05dcYdp9wrKr6BaFFGPFu0xEjJNlBBoKu93EIqFs2LjXtbnQs6Kdej53SQ**&fwidth=0&sid=6630341535499634632&forcestyle=undefined&wxLang=&tcScale=1&uid=&cap_cd=&rnd=967409&TCapIframeLoadTime=undefined&prehandleLoadTime=65&createIframeStart=1543746568809&rand=85146691&websig=57dd9ae3539dc46bd6dcbb5f6e3b71835f644ae5b78c140273a4baf568b710ecdef91d78245463545f5c59d47792811f3500a80ed50c33af8f4dd3e3ce38e705&vsig=c019dmAoqHQp7MQUTs0zC0qxohd3a_Lpcg2UvSfcCFTsQtdG_7SPQnf8nNd7Zd-_6twJ-wvuLoGoKV0mYS5FJOdKW7H0jIDmKq5mPXWvb2kiBP_rbk6j10h3QadB7D7pOlUA7KbqBL3wRsP9Y5D3Wg1kLyLt_vzqmfNkliu503jYJE*&img_index=1"));
+
+
+
+        /*BufferedInputStream bis = null;
+        HttpURLConnection httpUrl = null;
+        URL url = new URL("https://hy.captcha.qq.com/hycdn_1_1657788016386103808_0?aid=2100049389&accver=1&showtype=popup&ua=TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzcwLjAuMzUzOC42NyBTYWZhcmkvNTM3LjM2&noheader=1&fb=1&fpinfo=fpsig%3Dundefined&grayscale=1&clientype=2&subsid=3&sess=glj9qACE4CMvWsmPSky__qP1sOECKRb5YgK-D-7wyu6CJq80QJUSo8p86CDHvszZEaVUhhiiOX9JAONZpXCxRb4N27_ZIvDYNTc71QU8N_tYwDDy_evIFfdxELYMqpOmMTAE8y_w1D9l49d41QgnRwFiOoUG05dcYdp9wrKr6BaFFGPFu0xEjJNlBBoKu93EIqFs2LjXtbnQs6Kdej53SQ" + "**" + "&fwidth=0&sid=6630341535499634632&forcestyle=undefined&wxLang=&tcScale=1&uid=&cap_cd=&rnd=967409&TCapIframeLoadTime=undefined&prehandleLoadTime=65&createIframeStart=1543746568809&rand=85146691&websig=57dd9ae3539dc46bd6dcbb5f6e3b71835f644ae5b78c140273a4baf568b710ecdef91d78245463545f5c59d47792811f3500a80ed50c33af8f4dd3e3ce38e705&vsig=c019dmAoqHQp7MQUTs0zC0qxohd3a_Lpcg2UvSfcCFTsQtdG_7SPQnf8nNd7Zd-_6twJ-wvuLoGoKV0mYS5FJOdKW7H0jIDmKq5mPXWvb2kiBP_rbk6j10h3QadB7D7pOlUA7KbqBL3wRsP9Y5D3Wg1kLyLt_vzqmfNkliu503jYJE*&img_index=1");
+        httpUrl = (HttpURLConnection) url.openConnection();
+        httpUrl.connect();
+        bis = new BufferedInputStream(httpUrl.getInputStream());
+        BufferedImage fullBI = ImageIO.read(bis);*/
+
         for(int w = 340 ; w < fullBI.getWidth() - 18; w++){
             int whiteLineLen = 0;
             for (int h = 128; h < fullBI.getHeight() -200; h++){
